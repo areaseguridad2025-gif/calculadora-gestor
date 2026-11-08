@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import base64
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -16,13 +15,9 @@ scopes = [
 
 @st.cache_resource
 def conectar_google_sheets():
+    # Lee directamente los secretos configurados en Streamlit
     creds_dict = dict(st.secrets["gcp_service_account"])
     
-    # Decodificamos la clave privada desde Base64 para reconstruir los saltos de línea nativos
-    if "private_key_base64" in creds_dict:
-        decoded_bytes = base64.b64decode(creds_dict["private_key_base64"])
-        creds_dict["private_key"] = decoded_bytes.decode("utf-8")
-        
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     client = gspread.authorize(creds)
     sheet = client.open("gestor_datos_seguridad.xlsx").sheet1
