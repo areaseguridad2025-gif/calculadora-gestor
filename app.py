@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import re
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -11,11 +12,29 @@ scopes = [
     "https://www.googleapis.com/auth/drive"
 ]
 
+def limpiar_y_formatear_clave(private_key_raw):
+    # Normalizar saltos de línea y quitar espacios extremos
+    key_str = str(private_key_raw).strip().replace("\r\n", "\n").replace("\\n", "\n")
+    
+    # Extraer estrictamente el bloque PEM válido ignorando cualquier "extra data" al final o inicio
+    match = re.search(r"(-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----)", key_str, re.DOTALL)
+    if match:
+        pem_block = match.group(1)
+        lines = pem_block.split("\n")
+        cleaned_lines = [lines[0].strip()]
+        for line in lines[1:-1]:
+            cleaned_lines.append(line.strip())
+        cleaned_lines.append(lines[-1].strip())
+        return "\n".join(cleaned_lines) + "\n"
+    return key_str
+
 @st.cache_resource
 def conectar_google_sheets():
-    # Leemos directamente los secretos configurados en Streamlit
     creds_dict = dict(st.secrets["gcp_service_account"])
     
+    if "private_key" in creds_dict:
+        creds_dict["private_key"] = limpiar_y_formatear_clave(creds_dict["private_key"])
+        
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     client = gspread.authorize(creds)
     sheet = client.open("gestor_datos_seguridad.xlsx").sheet1
