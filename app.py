@@ -20,8 +20,8 @@ def conectar_google_sheets():
     creds_dict = dict(st.secrets["gcp_service_account"])
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     client = gspread.authorize(creds)
-    # Abre la hoja de cálculo por su nombre exacto en tu Google Drive
-    sheet = client.open("nombre_de_tu_archivo_en_drive").sheet1
+    # Abre la hoja de cálculo usando el nombre exacto de tu archivo en Google Drive
+    sheet = client.open("gestor_datos_seguridad.xlsx").sheet1
     return sheet
 
 # Control de sesión
