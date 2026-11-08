@@ -1,13 +1,14 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import json
+import tempfile
 import gspread
 from google.oauth2.service_account import Credentials
 
 # Configuración de la interfaz
 st.set_page_config(page_title="Calculadora Estándar", page_icon="🧮", layout="centered")
 
-# --- CONEXIÓN SEGURA CON GOOGLE SHEETS ---
 scopes = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
@@ -15,10 +16,20 @@ scopes = [
 
 @st.cache_resource
 def conectar_google_sheets():
-    # Lee directamente los secretos configurados en Streamlit
-    creds_dict = dict(st.secrets["gcp_service_account"])
+    # Extraemos los secretos como un diccionario común
+    secrets_dict = dict(st.secrets["gcp_service_account"])
     
-    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+    # Corregimos los saltos de línea explícitamente en el texto
+    if "private_key" in secrets_dict:
+        secrets_dict["private_key"] = secrets_dict["private_key"].replace("\\n", "\n")
+
+    # Creamos un archivo JSON temporal seguro en memoria para la autenticación
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_file:
+        json.dump(secrets_dict, temp_file)
+        temp_file_path = temp_file.name
+
+    # Autenticamos usando el archivo temporal limpio
+    creds = Credentials.from_service_account_file(temp_file_path, scopes=scopes)
     client = gspread.authorize(creds)
     sheet = client.open("gestor_datos_seguridad.xlsx").sheet1
     return sheet
@@ -29,7 +40,6 @@ if "authenticated" not in st.session_state:
 if "user_role" not in st.session_state:
     st.session_state.user_role = ""
 
-# Diccionario de PINs autorizados
 PINS = {
     "1020": "COORDINADOR",
     "1030": "ANALISTA",
