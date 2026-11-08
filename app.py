@@ -18,6 +18,11 @@ scopes = [
 def conectar_google_sheets():
     # Las credenciales se leen de forma segura desde los secretos de Streamlit
     creds_dict = dict(st.secrets["gcp_service_account"])
+    
+    # Solución definitiva: corregir los saltos de línea de la clave privada
+    if "private_key" in creds_dict:
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     client = gspread.authorize(creds)
     # Abre la hoja de cálculo usando el nombre exacto de tu archivo en Google Drive
