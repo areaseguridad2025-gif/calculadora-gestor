@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import base64
 import gspread
 from google.oauth2.service_account import Credentials
 
@@ -8,7 +9,6 @@ from google.oauth2.service_account import Credentials
 st.set_page_config(page_title="Calculadora Estándar", page_icon="🧮", layout="centered")
 
 # --- CONEXIÓN SEGURA CON GOOGLE SHEETS ---
-# Definimos los permisos necesarios
 scopes = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
@@ -16,16 +16,15 @@ scopes = [
 
 @st.cache_resource
 def conectar_google_sheets():
-    # Las credenciales se leen de forma segura desde los secretos de Streamlit
     creds_dict = dict(st.secrets["gcp_service_account"])
     
-    # Solución definitiva: corregir los saltos de línea de la clave privada
-    if "private_key" in creds_dict:
-        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+    # Decodificamos la clave privada desde Base64 para reconstruir los saltos de línea nativos
+    if "private_key_base64" in creds_dict:
+        decoded_bytes = base64.b64decode(creds_dict["private_key_base64"])
+        creds_dict["private_key"] = decoded_bytes.decode("utf-8")
         
     creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
     client = gspread.authorize(creds)
-    # Abre la hoja de cálculo usando el nombre exacto de tu archivo en Google Drive
     sheet = client.open("gestor_datos_seguridad.xlsx").sheet1
     return sheet
 
@@ -76,7 +75,6 @@ if st.session_state.authenticated:
                     data = sheet.get_all_records()
                     nuevo_id = len(data) + 1
                     
-                    # Estructura de la fila a insertar
                     nueva_fila = [
                         nuevo_id,
                         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -90,13 +88,11 @@ if st.session_state.authenticated:
                         st.session_state.user_role
                     ]
                     
-                    # Inserta la fila automáticamente en Google Sheets
                     sheet.append_row(nueva_fila)
                     st.success(f"¡Registro #{nuevo_id} guardado y sincronizado en Google Drive en tiempo real!")
                 except Exception as e:
                     st.error(f"Error al sincronizar con Google Drive: {e}")
 
-    # Visualización rápida de registros
     st.subheader("Registros Recientes en la Nube")
     try:
         sheet = conectar_google_sheets()
