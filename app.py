@@ -5,7 +5,7 @@ import requests
 
 st.set_page_config(page_title="Calculadora", page_icon="🔢", layout="centered")
 
-# --- INYECCIÓN DE MANIFIESTO PWA PARA APARIENCIA Y ICONO ---
+# --- INYECCIÓN DE MANIFIESTO PWA PARA APARIENCIA Y ICONO AUTOMÁTICO ---
 pwa_manifest = """
 <link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
   &quot;name&quot;: &quot;Calculadora&quot;,
@@ -33,6 +33,8 @@ if "user_role" not in st.session_state:
     st.session_state.user_role = ""
 if "calc_input" not in st.session_state:
     st.session_state.calc_input = ""
+if "reset_next" not in st.session_state:
+    st.session_state.reset_next = False
 
 PINS = {
     "1020": "COORDINADOR",
@@ -40,12 +42,20 @@ PINS = {
     "1040": "AUXILIAR"
 }
 
+def agregar_valor(val):
+    if st.session_state.reset_next:
+        if val in "0123456789.":
+            st.session_state.calc_input = ""
+        st.session_state.reset_next = False
+    st.session_state.calc_input += val
+
 if st.session_state.authenticated:
     st.sidebar.success(f"Sesión activa: {st.session_state.user_role}")
     if st.sidebar.button("Cerrar Sesión (Volver a Calculadora)"):
         st.session_state.authenticated = False
         st.session_state.user_role = ""
         st.session_state.calc_input = ""
+        st.session_state.reset_next = False
         st.rerun()
 
     st.title("📋 Panel de Gestión de Datos")
@@ -244,61 +254,66 @@ else:
 
     with col1:
         if st.button("7", use_container_width=True):
-            st.session_state.calc_input += "7"
+            agregar_valor("7")
             st.rerun()
         if st.button("4", use_container_width=True):
-            st.session_state.calc_input += "4"
+            agregar_valor("4")
             st.rerun()
         if st.button("1", use_container_width=True):
-            st.session_state.calc_input += "1"
+            agregar_valor("1")
             st.rerun()
         if st.button("C", use_container_width=True):
             st.session_state.calc_input = ""
+            st.session_state.reset_next = False
             st.rerun()
 
     with col2:
         if st.button("8", use_container_width=True):
-            st.session_state.calc_input += "8"
+            agregar_valor("8")
             st.rerun()
         if st.button("5", use_container_width=True):
-            st.session_state.calc_input += "5"
+            agregar_valor("5")
             st.rerun()
         if st.button("2", use_container_width=True):
-            st.session_state.calc_input += "2"
+            agregar_valor("2")
             st.rerun()
         if st.button("0", use_container_width=True):
-            st.session_state.calc_input += "0"
+            agregar_valor("0")
             st.rerun()
 
     with col3:
         if st.button("9", use_container_width=True):
-            st.session_state.calc_input += "9"
+            agregar_valor("9")
             st.rerun()
         if st.button("6", use_container_width=True):
-            st.session_state.calc_input += "6"
+            agregar_valor("6")
             st.rerun()
         if st.button("3", use_container_width=True):
-            st.session_state.calc_input += "3"
+            agregar_valor("3")
             st.rerun()
         if st.button(".", use_container_width=True):
-            st.session_state.calc_input += "."
+            agregar_valor(".")
             st.rerun()
 
     with col4:
         if st.button("+", use_container_width=True):
-            st.session_state.calc_input += "+"
+            agregar_valor("+")
+            st.session_state.reset_next = False
             st.rerun()
         if st.button("-", use_container_width=True):
-            st.session_state.calc_input += "-"
+            agregar_valor("-")
+            st.session_state.reset_next = False
             st.rerun()
         if st.button("*", use_container_width=True):
-            st.session_state.calc_input += "*"
+            agregar_valor("*")
+            st.session_state.reset_next = False
             st.rerun()
         if st.button("/", use_container_width=True):
-            st.session_state.calc_input += "/"
+            agregar_valor("/")
+            st.session_state.reset_next = False
             st.rerun()
 
-    # Botón de igual (=) camuflado que opera matemáticamente o desbloquea con el PIN
+    # Botón de igual (=) con doble función (Matemática real o Acceso por PIN)
     if st.button("=", use_container_width=True):
         entrada_val = st.session_state.calc_input.strip()
         if entrada_val in PINS:
@@ -311,13 +326,16 @@ else:
                 if all(c in allowed_chars for c in entrada_val) and entrada_val != "":
                     resultado = eval(entrada_val)
                     st.session_state.calc_input = str(resultado)
+                    st.session_state.reset_next = True
                     st.rerun()
                 else:
                     st.session_state.calc_input = "Error"
+                    st.session_state.reset_next = True
                     st.rerun()
             except Exception:
                 st.session_state.calc_input = "Error"
+                st.session_state.reset_next = True
                 st.rerun()
 
     st.markdown("---")
-    st.caption("v1.2.2 - Sistema estándar de cálculo")
+    st.caption("v1.2.3 - Sistema estándar de cálculo")
