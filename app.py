@@ -1,44 +1,11 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import re
-import gspread
-from google.oauth2.service_account import Credentials
+import requests
 
 st.set_page_config(page_title="Calculadora Estándar", page_icon="🧮", layout="centered")
 
-scopes = [
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-]
-
-def limpiar_y_formatear_clave(private_key_raw):
-    # Normalizar saltos de línea y quitar espacios extremos
-    key_str = str(private_key_raw).strip().replace("\r\n", "\n").replace("\\n", "\n")
-    
-    # Extraer estrictamente el bloque PEM válido ignorando cualquier "extra data" al final o inicio
-    match = re.search(r"(-----BEGIN PRIVATE KEY-----.*?-----END PRIVATE KEY-----)", key_str, re.DOTALL)
-    if match:
-        pem_block = match.group(1)
-        lines = pem_block.split("\n")
-        cleaned_lines = [lines[0].strip()]
-        for line in lines[1:-1]:
-            cleaned_lines.append(line.strip())
-        cleaned_lines.append(lines[-1].strip())
-        return "\n".join(cleaned_lines) + "\n"
-    return key_str
-
-@st.cache_resource
-def conectar_google_sheets():
-    creds_dict = dict(st.secrets["gcp_service_account"])
-    
-    if "private_key" in creds_dict:
-        creds_dict["private_key"] = limpiar_y_formatear_clave(creds_dict["private_key"])
-        
-    creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-    client = gspread.authorize(creds)
-    sheet = client.open("gestor_datos_seguridad.xlsx").sheet1
-    return sheet
+WEBHOOK_URL = st.secrets["WEBHOOK_URL"]
 
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -80,38 +47,26 @@ if st.session_state.authenticated:
                 st.error("Por favor completa al menos Placa y Serie.")
             else:
                 try:
-                    sheet = conectar_google_sheets()
-                    data = sheet.get_all_records()
-                    nuevo_id = len(data) + 1
+                    payload = {
+                        "placa": placa.upper(),
+                        "serie": serie.upper(),
+                        "centro_costo": centro_costo.upper(),
+                        "punto_venta": punto_venta.upper(),
+                        "ciap_1": ciap_1,
+                        "ciap_2": ciap_2,
+                        "funcionario_seguridad": funcionario_seguridad.upper(),
+                        "rol": st.session_state.user_role
+                    }
                     
-                    nueva_fila = [
-                        nuevo_id,
-                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        placa.upper(),
-                        serie.upper(),
-                        centro_costo.upper(),
-                        punto_venta.upper(),
-                        ciap_1,
-                        ciap_2,
-                        funcionario_seguridad.upper(),
-                        st.session_state.user_role
-                    ]
+                    response = requests.post(WEBHOOK_URL, json=payload)
+                    resultado = response.json()
                     
-                    sheet.append_row(nueva_fila)
-                    st.success(f"¡Registro #{nuevo_id} guardado y sincronizado en Google Drive en tiempo real!")
+                    if resultado.get("status") == "success":
+                        st.success("¡Registro guardado y sincronizado en Google Drive en tiempo real!")
+                    else:
+                        st.error(f"Error en el servidor de Google: {resultado.get('message')}")
                 except Exception as e:
-                    st.error(f"Error al sincronizar con Google Drive: {e}")
-
-    st.subheader("Registros Recientes en la Nube")
-    try:
-        sheet = conectar_google_sheets()
-        df_view = pd.DataFrame(sheet.get_all_records())
-        if not df_view.empty:
-            st.dataframe(df_view.tail(10))
-        else:
-            st.info("Aún no hay registros guardados.")
-    except Exception as e:
-        st.warning("No se pudieron cargar los registros previos.")
+                    st.error(f"Error de conexión: {e}")
 
 else:
     st.title("🧮 Calculadora Científica")
@@ -137,4 +92,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.0.4 - Sistema estándar de cálculo")
+    st.caption("v1.0.5 - Sistema estándar de cálculo")
