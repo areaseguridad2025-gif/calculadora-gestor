@@ -5,7 +5,7 @@ import requests
 
 st.set_page_config(page_title="Calculadora", page_icon="🔢", layout="centered")
 
-# --- INYECCIÓN DE MANIFIESTO PWA PARA APARIENCIA DE CALCULADORA ---
+# --- INYECCIÓN DE MANIFIESTO PWA PARA APARIENCIA Y ICONO ---
 pwa_manifest = """
 <link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
   &quot;name&quot;: &quot;Calculadora&quot;,
@@ -31,6 +31,8 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "user_role" not in st.session_state:
     st.session_state.user_role = ""
+if "calc_input" not in st.session_state:
+    st.session_state.calc_input = ""
 
 PINS = {
     "1020": "COORDINADOR",
@@ -43,6 +45,7 @@ if st.session_state.authenticated:
     if st.sidebar.button("Cerrar Sesión (Volver a Calculadora)"):
         st.session_state.authenticated = False
         st.session_state.user_role = ""
+        st.session_state.calc_input = ""
         st.rerun()
 
     st.title("📋 Panel de Gestión de Datos")
@@ -95,7 +98,6 @@ if st.session_state.authenticated:
 
     with tab2:
         st.markdown("Escribe la **Placa** del registro que deseas buscar y editar:")
-        
         busqueda_edicion = st.text_input("🔍 Ingresar Placa a buscar para editar...", "").strip().upper()
         
         if busqueda_edicion:
@@ -170,15 +172,12 @@ if st.session_state.authenticated:
                                             st.error(f"Error: {res_up_json.get('message')}")
                             else:
                                 st.warning("No se encontró ningún registro con esa placa exacta.")
-                        else:
-                            st.error("No se encontró la columna PLACA en la hoja de cálculo.")
             except Exception as e:
                 st.warning(f"Error de conexión: {e}")
 
     with tab3:
         st.subheader("🔍 Consultar y Buscar Registro")
         st.markdown("Escribe la **Placa** para consultar la información en formato de formulario:")
-        
         busqueda_consulta = st.text_input("🔍 Ingresar Placa a consultar...", "").strip().upper()
         
         if busqueda_consulta:
@@ -235,26 +234,89 @@ if st.session_state.authenticated:
 
 else:
     st.title("🧮 Calculadora Científica")
-    st.write("Ingrese una operación matemática o introduzca su PIN de acceso.")
+    st.write("Utilice el teclado numérico o introduzca su PIN de acceso.")
 
-    entrada = st.text_input("Pantalla", value="", placeholder="Ej. 45 * 12 o PIN de usuario")
+    # Pantalla de la calculadora
+    st.text_input("Pantalla", value=st.session_state.calc_input, key="display_input", disabled=True)
 
-    if st.button("Calcular / Acceder"):
-        if entrada.strip() in PINS:
+    # Grilla de botones numéricos y operaciones
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        if st.button("7", use_container_width=True):
+            st.session_state.calc_input += "7"
+            st.rerun()
+        if st.button("4", use_container_width=True):
+            st.session_state.calc_input += "4"
+            st.rerun()
+        if st.button("1", use_container_width=True):
+            st.session_state.calc_input += "1"
+            st.rerun()
+        if st.button("C", use_container_width=True):
+            st.session_state.calc_input = ""
+            st.rerun()
+
+    with col2:
+        if st.button("8", use_container_width=True):
+            st.session_state.calc_input += "8"
+            st.rerun()
+        if st.button("5", use_container_width=True):
+            st.session_state.calc_input += "5"
+            st.rerun()
+        if st.button("2", use_container_width=True):
+            st.session_state.calc_input += "2"
+            st.rerun()
+        if st.button("0", use_container_width=True):
+            st.session_state.calc_input += "0"
+            st.rerun()
+
+    with col3:
+        if st.button("9", use_container_width=True):
+            st.session_state.calc_input += "9"
+            st.rerun()
+        if st.button("6", use_container_width=True):
+            st.session_state.calc_input += "6"
+            st.rerun()
+        if st.button("3", use_container_width=True):
+            st.session_state.calc_input += "3"
+            st.rerun()
+        if st.button(".", use_container_width=True):
+            st.session_state.calc_input += "."
+            st.rerun()
+
+    with col4:
+        if st.button("+", use_container_width=True):
+            st.session_state.calc_input += "+"
+            st.rerun()
+        if st.button("-", use_container_width=True):
+            st.session_state.calc_input += "-"
+            st.rerun()
+        if st.button("*", use_container_width=True):
+            st.session_state.calc_input += "*"
+            st.rerun()
+        if st.button("/", use_container_width=True):
+            st.session_state.calc_input += "/"
+            st.rerun()
+
+    # Botón de cálculo y acceso
+    if st.button("🧮 Calcular / Acceder", use_container_width=True):
+        entrada_val = st.session_state.calc_input.strip()
+        if entrada_val in PINS:
             st.session_state.authenticated = True
-            st.session_state.user_role = PINS[entrada.strip()]
-            st.success("Acceso concedido. Cargando gestor...")
+            st.session_state.user_role = PINS[entrada_val]
+            st.success("Acceso concedido...")
             st.rerun()
         else:
             try:
                 allowed_chars = set("0123456789+-*/(). ")
-                if all(c in allowed_chars for c in entrada):
-                    resultado = eval(entrada)
-                    st.info(f"Resultado: {resultado}")
+                if all(c in allowed_chars for c in entrada_val):
+                    resultado = eval(entrada_val)
+                    st.session_state.calc_input = str(resultado)
+                    st.rerun()
                 else:
                     st.error("Operación no válida o PIN incorrecto.")
             except Exception:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.2.0 - Sistema estándar de cálculo")
+    st.caption("v1.2.1 - Calculadora Táctil Segura")
