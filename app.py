@@ -69,16 +69,29 @@ if st.session_state.authenticated:
                 except Exception as e:
                     st.error(f"Error de conexión: {e}")
 
-    st.subheader("Registros Recientes en la Nube")
+    st.subheader("🔍 Consultar y Buscar Registros")
     try:
         response = requests.get(WEBHOOK_URL)
         resultado = response.json()
         if resultado.get("status") == "success":
             rows = resultado.get("data", [])
             if len(rows) > 1:
-                # La primera fila son los encabezados
+                # Convertir a DataFrame usando la primera fila como cabecera
                 df_view = pd.DataFrame(rows[1:], columns=rows[0])
-                st.dataframe(df_view.tail(10))
+                
+                # Caja de búsqueda global
+                busqueda = st.text_input("Buscar por Placa, Serie, Centro de Costo, Funcionario...", "").strip().upper()
+                
+                if busqueda:
+                    # Filtrar filas donde cualquier columna coincida con el texto buscado
+                    mask = df_view.apply(lambda row: row.astype(str).str.contains(busqueda, case=False, na=False).any(), axis=1)
+                    df_view = df_view[mask]
+                
+                if not df_view.empty:
+                    st.dataframe(df_view, use_container_width=True)
+                    st.caption(f"Mostrando {len(df_view)} registro(s) encontrado(s).")
+                else:
+                    st.info("No se encontró ningún registro que coincida con la búsqueda.")
             else:
                 st.info("Aún no hay registros guardados en la hoja.")
         else:
@@ -110,4 +123,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.0.6 - Sistema estándar de cálculo")
+    st.caption("v1.0.7 - Sistema estándar de cálculo")
