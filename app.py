@@ -26,77 +26,142 @@ if st.session_state.authenticated:
         st.rerun()
 
     st.title("📋 Panel de Gestión de Datos")
-    st.markdown("Ingrese la información requerida en la ficha:")
+    
+    # Pestañas para separar Nuevo Registro y Edición/Consulta
+    tab1, tab2, tab3 = st.tabs(["➕ Nuevo Registro", "✏️ Editar Registro", "🔍 Consultar y Buscar"])
 
-    with st.form("form_gestion"):
-        col1, col2 = st.columns(2)
-        with col1:
-            placa = st.text_input("PLACA")
-            serie = st.text_input("SERIE")
-            centro_costo = st.text_input("CENTRO DE COSTO")
-            punto_venta = st.text_input("PUNTO DE VENTA")
-        with col2:
-            ciap_1 = st.text_input("CIAP 1")
-            ciap_2 = st.text_input("CIAP 2")
-            funcionario_seguridad = st.text_input("FUNCIONARIO DE SEGURIDAD")
-        
-        submitted = st.form_submit_button("Guardar y Sincronizar en Google Drive")
-        
-        if submitted:
-            if not placa or not serie:
-                st.error("Por favor completa al menos Placa y Serie.")
-            else:
-                try:
-                    payload = {
-                        "placa": placa.upper(),
-                        "serie": serie.upper(),
-                        "centro_costo": centro_costo.upper(),
-                        "punto_venta": punto_venta.upper(),
-                        "ciap_1": ciap_1,
-                        "ciap_2": ciap_2,
-                        "funcionario_seguridad": funcionario_seguridad.upper(),
-                        "rol": st.session_state.user_role
-                    }
-                    
-                    response = requests.post(WEBHOOK_URL, json=payload)
-                    resultado = response.json()
-                    
-                    if resultado.get("status") == "success":
-                        st.success(f"¡Registro #{resultado.get('id')} guardado y sincronizado exitosamente!")
-                        st.rerun()
-                    elif resultado.get("status") == "duplicate":
-                        st.warning(resultado.get("message"))
-                    else:
-                        st.error(f"Error en el servidor de Google: {resultado.get('message')}")
-                except Exception as e:
-                    st.error(f"Error de conexión: {e}")
-
-    st.subheader("🔍 Consultar y Buscar Registros")
-    try:
-        response = requests.get(WEBHOOK_URL)
-        resultado = response.json()
-        if resultado.get("status") == "success":
-            rows = resultado.get("data", [])
-            if len(rows) > 1:
-                df_view = pd.DataFrame(rows[1:], columns=rows[0])
-                
-                busqueda = st.text_input("Buscar por Placa, Serie, Centro de Costo, Funcionario...", "").strip().upper()
-                
-                if busqueda:
-                    mask = df_view.apply(lambda row: row.astype(str).str.contains(busqueda, case=False, na=False).any(), axis=1)
-                    df_view = df_view[mask]
-                
-                if not df_view.empty:
-                    st.dataframe(df_view, use_container_width=True, hide_index=True)
-                    st.caption(f"Mostrando {len(df_view)} registro(s) encontrado(s).")
+    with tab1:
+        st.markdown("Ingrese la información requerida en la ficha:")
+        with st.form("form_gestion"):
+            col1, col2 = st.columns(2)
+            with col1:
+                placa = st.text_input("PLACA")
+                serie = st.text_input("SERIE")
+                centro_costo = st.text_input("CENTRO DE COSTO")
+                punto_venta = st.text_input("PUNTO DE VENTA")
+            with col2:
+                ciap_1 = st.text_input("CIAP 1")
+                ciap_2 = st.text_input("CIAP 2")
+                funcionario_seguridad = st.text_input("FUNCIONARIO DE SEGURIDAD")
+            
+            submitted = st.form_submit_button("Guardar y Sincronizar en Google Drive")
+            
+            if submitted:
+                if not placa or not serie:
+                    st.error("Por favor completa al menos Placa y Serie.")
                 else:
-                    st.info("No se encontró ningún registro que coincida con la búsqueda.")
+                    try:
+                        payload = {
+                            "placa": placa.upper(),
+                            "serie": serie.upper(),
+                            "centro_costo": centro_costo.upper(),
+                            "punto_venta": punto_venta.upper(),
+                            "ciap_1": ciap_1,
+                            "ciap_2": ciap_2,
+                            "funcionario_seguridad": funcionario_seguridad.upper(),
+                            "rol": st.session_state.user_role
+                        }
+                        
+                        response = requests.post(WEBHOOK_URL, json=payload)
+                        resultado = response.json()
+                        
+                        if resultado.get("status") == "success":
+                            st.success(f"¡Registro #{resultado.get('id')} guardado y sincronizado exitosamente!")
+                        elif resultado.get("status") == "duplicate":
+                            st.warning(resultado.get("message"))
+                        else:
+                            st.error(f"Error en el servidor de Google: {resultado.get('message')}")
+                    except Exception as e:
+                        st.error(f"Error de conexión: {e}")
+
+    with tab2:
+        st.markdown("Modifica un registro existente buscando por su número de **ID**:")
+        
+        # Cargar datos para buscar el ID
+        try:
+            resp_get = requests.get(WEBHOOK_URL)
+            res_json = resp_get.json()
+            if res_json.get("status") == "success":
+                rows_data = res_json.get("data", [])
+                if len(rows_data) > 1:
+                    df_edit = pd.DataFrame(rows_data[1:], columns=rows_data[0])
+                    ids_disponibles = df_edit["ID"].tolist() if "ID" in df_edit.columns else []
+                    
+                    selected_id = st.selectbox("Seleccione el ID a editar", options=ids_disponibles)
+                    
+                    if selected_id:
+                        # Filtrar la fila correspondiente
+                        fila_match = df_edit[df_edit["ID"] == selected_id]
+                        if not fila_match.empty:
+                            row_vals = fila_match.iloc[0]
+                            
+                            with st.form("form_edicion"):
+                                e_col1, e_col2 = st.columns(2)
+                                with e_col1:
+                                    n_placa = st.text_input("PLACA", value=str(row_vals.get("PLACA", "")))
+                                    n_serie = st.text_input("SERIE", value=str(row_vals.get("SERIE", "")))
+                                    n_cc = st.text_input("CENTRO DE COSTO", value=str(row_vals.get("CENTRO_COSTO", "")))
+                                    n_pv = st.text_input("PUNTO DE VENTA", value=str(row_vals.get("PUNTO_VENTA", "")))
+                                with e_col2:
+                                    n_c1 = st.text_input("CIAP 1", value=str(row_vals.get("CIAP_1", "")))
+                                    n_c2 = st.text_input("CIAP 2", value=str(row_vals.get("CIAP_2", "")))
+                                    n_func = st.text_input("FUNCIONARIO DE SEGURIDAD", value=str(row_vals.get("FUNCIONARIO_SEGURIDAD", "")))
+                                
+                                update_submitted = st.form_submit_button("Actualizar Registro en Google Sheets")
+                                
+                                if update_submitted:
+                                    payload_update = {
+                                        "action": "update",
+                                        "id": selected_id,
+                                        "placa": n_placa.upper(),
+                                        "serie": n_serie.upper(),
+                                        "centro_costo": n_cc.upper(),
+                                        "punto_venta": n_pv.upper(),
+                                        "ciap_1": n_c1,
+                                        "ciap_2": n_c2,
+                                        "funcionario_seguridad": n_func.upper(),
+                                        "rol": st.session_state.user_role
+                                    }
+                                    
+                                    resp_up = requests.post(WEBHOOK_URL, json=payload_update)
+                                    res_up_json = resp_up.json()
+                                    
+                                    if res_up_json.get("status") == "success":
+                                        st.success("¡Registro actualizado exitosamente en la nube!")
+                                    else:
+                                        st.error(f"Error: {res_up_json.get('message')}")
+                else:
+                    st.info("No hay registros disponibles para editar.")
+        except Exception as e:
+            st.warning("No se pudo conectar con la base de datos para edición.")
+
+    with tab3:
+        st.subheader("🔍 Consultar y Buscar Registros")
+        try:
+            response = requests.get(WEBHOOK_URL)
+            resultado = response.json()
+            if resultado.get("status") == "success":
+                rows = resultado.get("data", [])
+                if len(rows) > 1:
+                    df_view = pd.DataFrame(rows[1:], columns=rows[0])
+                    
+                    busqueda = st.text_input("Buscar por Placa, Serie, Centro de Costo, Funcionario...", "").strip().upper()
+                    
+                    if busqueda:
+                        mask = df_view.apply(lambda row: row.astype(str).str.contains(busqueda, case=False, na=False).any(), axis=1)
+                        df_view = df_view[mask]
+                    
+                    if not df_view.empty:
+                        st.dataframe(df_view, use_container_width=True, hide_index=True)
+                        st.caption(f"Mostrando {len(df_view)} registro(s) encontrado(s).")
+                    else:
+                        st.info("No se encontró ningún registro que coincida con la búsqueda.")
+                else:
+                    st.info("Aún no hay registros guardados en la hoja.")
             else:
-                st.info("Aún no hay registros guardados en la hoja.")
-        else:
+                st.warning("No se pudieron cargar los registros previos.")
+        except Exception as e:
             st.warning("No se pudieron cargar los registros previos.")
-    except Exception as e:
-        st.warning("No se pudieron cargar los registros previos.")
 
 else:
     st.title("🧮 Calculadora Científica")
@@ -122,4 +187,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.0.9 - Sistema estándar de cálculo")
+    st.caption("v1.1.0 - Sistema estándar de cálculo")
