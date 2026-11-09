@@ -76,7 +76,7 @@ if st.session_state.authenticated:
     with tab2:
         st.markdown("Escribe la **Placa** del registro que deseas buscar y editar:")
         
-        busqueda_edicion = st.text_input("🔍 Ingresar Placa a buscar...", "").strip().upper()
+        busqueda_edicion = st.text_input("🔍 Ingresar Placa a buscar para editar...", "").strip().upper()
         
         if busqueda_edicion:
             try:
@@ -156,12 +156,12 @@ if st.session_state.authenticated:
                 st.warning(f"Error de conexión: {e}")
 
     with tab3:
-        st.subheader("🔍 Consultar y Buscar Registros")
+        st.subheader("🔍 Consultar y Buscar Registro")
+        st.markdown("Escribe la **Placa** para consultar la información en formato de formulario:")
         
-        busqueda = st.text_input("Buscar por Placa, Serie, Centro de Costo, Funcionario...", "").strip().upper()
+        busqueda_consulta = st.text_input("🔍 Ingresar Placa a consultar...", "").strip().upper()
         
-        # La tabla solo se procesa y se muestra si el usuario escribe algo en la barra
-        if busqueda:
+        if busqueda_consulta:
             try:
                 response = requests.get(WEBHOOK_URL)
                 resultado = response.json()
@@ -171,22 +171,48 @@ if st.session_state.authenticated:
                         df_view = pd.DataFrame(rows[1:], columns=rows[0])
                         df_view.columns = [str(col).strip().upper() for col in df_view.columns]
                         
-                        mask = df_view.apply(lambda row: row.astype(str).str.contains(busqueda, case=False, na=False).any(), axis=1)
-                        df_view = df_view[mask]
-                        
-                        if not df_view.empty:
-                            st.dataframe(df_view, use_container_width=True, hide_index=True)
-                            st.caption(f"Mostrando {len(df_view)} registro(s) encontrado(s).")
-                        else:
-                            st.info("No se encontró ningún registro que coincida con la búsqueda.")
-                    else:
-                        st.info("Aún no hay registros guardados en la hoja.")
-                else:
-                    st.warning("No se pudieron cargar los registros previos.")
+                        if "PLACA" in df_view.columns:
+                            fila_match = df_view[df_view["PLACA"].astype(str).str.upper() == busqueda_consulta]
+                            
+                            if not fila_match.empty:
+                                row_vals = fila_match.iloc[0]
+                                target_id = row_vals.get("ID", "")
+                                
+                                def get_field_c(col_name, fallback_index):
+                                    if col_name in row_vals and pd.notna(row_vals[col_name]):
+                                        return str(row_vals[col_name])
+                                    try:
+                                        return str(fila_match.iloc[0, fallback_index])
+                                    except:
+                                        return ""
+
+                                c_placa = get_field_c("PLACA", 2)
+                                c_serie = get_field_c("SERIE", 3)
+                                c_cc = get_field_c("CENTRO_COSTO", 4) if "CENTRO_COSTO" in df_view.columns else get_field_c("CENTRO DE COSTO", 4)
+                                c_pv = get_field_c("PUNTO_VENTA", 5) if "PUNTO_VENTA" in df_view.columns else get_field_c("PUNTO DE VENTA", 5)
+                                c_c1 = get_field_c("CIAP_1", 6)
+                                c_c2 = get_field_c("CIAP_2", 7)
+                                c_func = get_field_c("FUNCIONARIO_SEGURIDAD", 8)
+
+                                st.success(f"¡Registro encontrado! (ID: {target_id})")
+                                
+                                # Mostrar los datos en formato de formulario de solo lectura
+                                c_col1, c_col2 = st.columns(2)
+                                with c_col1:
+                                    st.text_input("PLACA (Consulta)", value=c_placa, disabled=True, key="c_placa")
+                                    st.text_input("SERIE (Consulta)", value=c_serie, disabled=True, key="c_serie")
+                                    st.text_input("CENTRO DE COSTO (Consulta)", value=c_cc, disabled=True, key="c_cc")
+                                    st.text_input("PUNTO DE VENTA (Consulta)", value=c_pv, disabled=True, key="c_pv")
+                                with c_col2:
+                                    st.text_input("CIAP 1 (Consulta)", value=c_c1, disabled=True, key="c_c1")
+                                    st.text_input("CIAP 2 (Consulta)", value=c_c2, disabled=True, key="c_c2")
+                                    st.text_input("FUNCIONARIO DE SEGURIDAD (Consulta)", value=c_func, disabled=True, key="c_func")
+                            else:
+                                st.warning("No se encontró ningún registro con esa placa exacta.")
             except Exception as e:
-                st.warning("No se pudieron cargar los registros previos.")
+                st.warning(f"Error de conexión: {e}")
         else:
-            st.info("Escribe en la barra superior para buscar y mostrar los registros correspondientes.")
+            st.info("Escribe una Placa en la barra superior para desplegar su ficha informativa.")
 
 else:
     st.title("🧮 Calculadora Científica")
@@ -212,4 +238,5 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.1.8 - Sistema estándar de cálculo")
+    st.caption("v1.2.0 - Sistema estándar de cálculo")
+    
