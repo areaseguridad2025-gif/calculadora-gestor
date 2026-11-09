@@ -87,54 +87,59 @@ if st.session_state.authenticated:
                     if len(rows_data) > 1:
                         df_edit = pd.DataFrame(rows_data[1:], columns=rows_data[0])
                         
-                        # Buscar coincidencia exacta o parcial en la columna PLACA
-                        fila_match = df_edit[df_edit["PLACA"].astype(str).str.upper() == busqueda_edicion]
+                        # Normalizar nombres de columnas para evitar errores de espacios o mayúsculas
+                        df_edit.columns = [str(col).strip().upper() for col in df_edit.columns]
                         
-                        if not fila_match.empty:
-                            row_vals = fila_match.iloc[0]
-                            target_id = row_vals.get("ID")
+                        if "PLACA" in df_edit.columns:
+                            fila_match = df_edit[df_edit["PLACA"].astype(str).str.upper() == busqueda_edicion]
                             
-                            st.success(f"¡Registro encontrado! (ID: {target_id}) Modifica los campos necesarios:")
-                            
-                            with st.form("form_edicion"):
-                                e_col1, e_col2 = st.columns(2)
-                                with e_col1:
-                                    n_placa = st.text_input("PLACA", value=str(row_vals.get("PLACA", "")))
-                                    n_serie = st.text_input("SERIE", value=str(row_vals.get("SERIE", "")))
-                                    n_cc = st.text_input("CENTRO DE COSTO", value=str(row_vals.get("CENTRO_COSTO", "")))
-                                    n_pv = st.text_input("PUNTO DE VENTA", value=str(row_vals.get("PUNTO_VENTA", "")))
-                                with e_col2:
-                                    n_c1 = st.text_input("CIAP 1", value=str(row_vals.get("CIAP_1", "")))
-                                    n_c2 = st.text_input("CIAP 2", value=str(row_vals.get("CIAP_2", "")))
-                                    n_func = st.text_input("FUNCIONARIO DE SEGURIDAD", value=str(row_vals.get("FUNCIONARIO_SEGURIDAD", "")))
+                            if not fila_match.empty:
+                                row_vals = fila_match.iloc[0]
+                                target_id = row_vals.get("ID", "")
                                 
-                                update_submitted = st.form_submit_button("Actualizar Registro en Google Sheets")
+                                st.success(f"¡Registro encontrado! (ID: {target_id}) Modifica los campos necesarios:")
                                 
-                                if update_submitted:
-                                    payload_update = {
-                                        "action": "update",
-                                        "id": target_id,
-                                        "placa": n_placa.upper(),
-                                        "serie": n_serie.upper(),
-                                        "centro_costo": n_cc.upper(),
-                                        "punto_venta": n_pv.upper(),
-                                        "ciap_1": n_c1,
-                                        "ciap_2": n_c2,
-                                        "funcionario_seguridad": n_func.upper(),
-                                        "rol": st.session_state.user_role
-                                    }
+                                with st.form("form_edicion"):
+                                    e_col1, e_col2 = st.columns(2)
+                                    with e_col1:
+                                        n_placa = st.text_input("PLACA", value=str(row_vals.get("PLACA", "")))
+                                        n_serie = st.text_input("SERIE", value=str(row_vals.get("SERIE", "")))
+                                        n_cc = st.text_input("CENTRO DE COSTO", value=str(row_vals.get("CENTRO_COSTO", "")))
+                                        n_pv = st.text_input("PUNTO DE VENTA", value=str(row_vals.get("PUNTO_VENTA", "")))
+                                    with e_col2:
+                                        n_c1 = st.text_input("CIAP 1", value=str(row_vals.get("CIAP_1", "")))
+                                        n_c2 = st.text_input("CIAP 2", value=str(row_vals.get("CIAP_2", "")))
+                                        n_func = st.text_input("FUNCIONARIO DE SEGURIDAD", value=str(row_vals.get("FUNCIONARIO_SEGURIDAD", "")))
                                     
-                                    resp_up = requests.post(WEBHOOK_URL, json=payload_update)
-                                    res_up_json = resp_up.json()
+                                    update_submitted = st.form_submit_button("Actualizar Registro en Google Sheets")
                                     
-                                    if res_up_json.get("status") == "success":
-                                        st.success("¡Registro actualizado exitosamente en la nube!")
-                                    else:
-                                        st.error(f"Error: {res_up_json.get('message')}")
+                                    if update_submitted:
+                                        payload_update = {
+                                            "action": "update",
+                                            "id": target_id,
+                                            "placa": n_placa.upper(),
+                                            "serie": n_serie.upper(),
+                                            "centro_costo": n_cc.upper(),
+                                            "punto_venta": n_pv.upper(),
+                                            "ciap_1": n_c1,
+                                            "ciap_2": n_c2,
+                                            "funcionario_seguridad": n_func.upper(),
+                                            "rol": st.session_state.user_role
+                                        }
+                                        
+                                        resp_up = requests.post(WEBHOOK_URL, json=payload_update)
+                                        res_up_json = resp_up.json()
+                                        
+                                        if res_up_json.get("status") == "success":
+                                            st.success("¡Registro actualizado exitosamente en la nube!")
+                                        else:
+                                            st.error(f"Error: {res_up_json.get('message')}")
+                            else:
+                                st.warning("No se encontró ningún registro con esa placa exacta.")
                         else:
-                            st.warning("No se encontró ningún registro con esa placa exacta.")
+                            st.error("No se encontró la columna PLACA en la hoja de cálculo.")
             except Exception as e:
-                st.warning("No se pudo conectar con la base de datos.")
+                st.warning(f"No se pudo conectar con la base de datos: {e}")
 
     with tab3:
         st.subheader("🔍 Consultar y Buscar Registros")
@@ -145,6 +150,7 @@ if st.session_state.authenticated:
                 rows = resultado.get("data", [])
                 if len(rows) > 1:
                     df_view = pd.DataFrame(rows[1:], columns=rows[0])
+                    df_view.columns = [str(col).strip().upper() for col in df_view.columns]
                     
                     busqueda = st.text_input("Buscar por Placa, Serie, Centro de Costo, Funcionario...", "").strip().upper()
                     
@@ -188,4 +194,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.1.2 - Sistema estándar de cálculo")
+    st.caption("v1.1.3 - Sistema estándar de cálculo")
