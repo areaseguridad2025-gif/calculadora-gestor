@@ -3,57 +3,7 @@ import pandas as pd
 from datetime import datetime
 import requests
 
-st.set_page_config(page_title="Calculadora", page_icon="🔢", layout="centered")
-
-# --- ESTILO CSS INFALIBLE PARA LA GRILLA DE LA CALCULADORA ---
-st.markdown("""
-<style>
-    /* Forzar que las columnas de Streamlit mantengan el ancho en filas de 4 */
-    div.row-widget.stHorizontal {
-        display: flex !important;
-        flex-direction: row !important;
-    }
-    div.stHorizontal > div {
-        flex: 1 !important;
-        min-width: 0 !important;
-    }
-    /* Estilo estético para los botones tipo calculadora */
-    div.stButton > button {
-        width: 100%;
-        border-radius: 6px;
-        font-weight: bold;
-        font-size: 20px;
-        height: 55px;
-        background-color: #f0f2f6;
-        color: #111111;
-        border: 1px solid #d6d6d6;
-    }
-    div.stButton > button:active {
-        background-color: #e0e0e0;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-# --- INYECCIÓN DE MANIFIESTO PWA PARA APARIENCIA Y ICONO AUTOMÁTICO ---
-pwa_manifest = """
-<link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
-  &quot;name&quot;: &quot;Calculadora&quot;,
-  &quot;short_name&quot;: &quot;Calculadora&quot;,
-  &quot;start_url&quot;: &quot;.&quot;,
-  &quot;display&quot;: &quot;standalone&quot;,
-  &quot;background_color&quot;: &quot;#ffffff&quot;,
-  &quot;theme_color&quot;: &quot;#ffffff&quot;,
-  &quot;icons&quot;: [
-    {
-      &quot;src&quot;: &quot;https://cdn-icons-png.flaticon.com/512/564/564444.png&quot;,
-      &quot;sizes&quot;: &quot;512x512&quot;,
-      &quot;type&quot;: &quot;image/png&quot;,
-      &quot;purpose&quot;: &quot;any maskable&quot;
-    }
-  ]
-}">
-"""
-st.markdown(pwa_manifest, unsafe_allow_html=True)
+st.set_page_config(page_title="Calculadora Estándar", page_icon="🧮", layout="centered")
 
 WEBHOOK_URL = st.secrets["WEBHOOK_URL"]
 
@@ -61,10 +11,6 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 if "user_role" not in st.session_state:
     st.session_state.user_role = ""
-if "calc_input" not in st.session_state:
-    st.session_state.calc_input = ""
-if "reset_next" not in st.session_state:
-    st.session_state.reset_next = False
 
 PINS = {
     "1020": "COORDINADOR",
@@ -72,20 +18,11 @@ PINS = {
     "1040": "AUXILIAR"
 }
 
-def agregar_valor(val):
-    if st.session_state.reset_next:
-        if val in "0123456789.":
-            st.session_state.calc_input = ""
-        st.session_state.reset_next = False
-    st.session_state.calc_input += val
-
 if st.session_state.authenticated:
     st.sidebar.success(f"Sesión activa: {st.session_state.user_role}")
     if st.sidebar.button("Cerrar Sesión (Volver a Calculadora)"):
         st.session_state.authenticated = False
         st.session_state.user_role = ""
-        st.session_state.calc_input = ""
-        st.session_state.reset_next = False
         st.rerun()
 
     st.title("📋 Panel de Gestión de Datos")
@@ -138,6 +75,7 @@ if st.session_state.authenticated:
 
     with tab2:
         st.markdown("Escribe la **Placa** del registro que deseas buscar y editar:")
+        
         busqueda_edicion = st.text_input("🔍 Ingresar Placa a buscar para editar...", "").strip().upper()
         
         if busqueda_edicion:
@@ -186,7 +124,7 @@ if st.session_state.authenticated:
                                         n_c1 = st.text_input("CIAP 1", value=val_c1)
                                         n_c2 = st.text_input("CIAP 2", value=val_c2)
                                         n_func = st.text_input("FUNCIONARIO DE SEGURIDAD", value=val_func)
-                                
+                                    
                                     update_submitted = st.form_submit_button("Actualizar Registro en Google Sheets")
                                     
                                     if update_submitted:
@@ -212,12 +150,15 @@ if st.session_state.authenticated:
                                             st.error(f"Error: {res_up_json.get('message')}")
                             else:
                                 st.warning("No se encontró ningún registro con esa placa exacta.")
+                        else:
+                            st.error("No se encontró la columna PLACA en la hoja de cálculo.")
             except Exception as e:
                 st.warning(f"Error de conexión: {e}")
 
     with tab3:
         st.subheader("🔍 Consultar y Buscar Registro")
         st.markdown("Escribe la **Placa** para consultar la información en formato de formulario:")
+        
         busqueda_consulta = st.text_input("🔍 Ingresar Placa a consultar...", "").strip().upper()
         
         if busqueda_consulta:
@@ -255,6 +196,7 @@ if st.session_state.authenticated:
 
                                 st.success(f"¡Registro encontrado! (ID: {target_id})")
                                 
+                                # Mostrar los datos en formato de formulario de solo lectura
                                 c_col1, c_col2 = st.columns(2)
                                 with c_col1:
                                     st.text_input("PLACA (Consulta)", value=c_placa, disabled=True, key="c_placa")
@@ -273,78 +215,27 @@ if st.session_state.authenticated:
             st.info("Escribe una Placa en la barra superior para desplegar su ficha informativa.")
 
 else:
-    st.title("🧮 Calculadora")
-    
-    # Pantalla de la calculadora
-    st.text_input("Pantalla", value=st.session_state.calc_input, key="display_input", disabled=True, label_visibility="collapsed")
+    st.title("🧮 Calculadora Científica")
+    st.write("Ingrese una operación matemática o introduzca su PIN de acceso.")
 
-    # FILA 1: 7, 8, 9, /
-    r1_c1, r1_c2, r1_c3, r1_c4 = st.columns(4)
-    with r1_c1:
-        if st.button("7", use_container_width=True): agregar_valor("7"); st.rerun()
-    with r1_c2:
-        if st.button("8", use_container_width=True): agregar_valor("8"); st.rerun()
-    with r1_c3:
-        if st.button("9", use_container_width=True): agregar_valor("9"); st.rerun()
-    with r1_c4:
-        if st.button("/", use_container_width=True): agregar_valor("/"); st.session_state.reset_next = False; st.rerun()
+    entrada = st.text_input("Pantalla", value="", placeholder="Ej. 45 * 12 o PIN de usuario")
 
-    # FILA 2: 4, 5, 6, *
-    r2_c1, r2_c2, r2_c3, r2_c4 = st.columns(4)
-    with r2_c1:
-        if st.button("4", use_container_width=True): agregar_valor("4"); st.rerun()
-    with r2_c2:
-        if st.button("5", use_container_width=True): agregar_valor("5"); st.rerun()
-    with r2_c3:
-        if st.button("6", use_container_width=True): agregar_valor("6"); st.rerun()
-    with r2_c4:
-        if st.button("×", use_container_width=True): agregar_valor("*"); st.session_state.reset_next = False; st.rerun()
-
-    # FILA 3: 1, 2, 3, -
-    r3_c1, r3_c2, r3_c3, r3_c4 = st.columns(4)
-    with r3_c1:
-        if st.button("1", use_container_width=True): agregar_valor("1"); st.rerun()
-    with r3_c2:
-        if st.button("2", use_container_width=True): agregar_valor("2"); st.rerun()
-    with r3_c3:
-        if st.button("3", use_container_width=True): agregar_valor("3"); st.rerun()
-    with r3_c4:
-        if st.button("-", use_container_width=True): agregar_valor("-"); st.session_state.reset_next = False; st.rerun()
-
-    # FILA 4: C, 0, ., +
-    r4_c1, r4_c2, r4_c3, r4_c4 = st.columns(4)
-    with r4_c1:
-        if st.button("C", use_container_width=True): st.session_state.calc_input = ""; st.session_state.reset_next = False; st.rerun()
-    with r4_c2:
-        if st.button("0", use_container_width=True): agregar_valor("0"); st.rerun()
-    with r4_c3:
-        if st.button(".", use_container_width=True): agregar_valor("."); st.rerun()
-    with r4_c4:
-        if st.button("+", use_container_width=True): agregar_valor("+"); st.session_state.reset_next = False; st.rerun()
-
-    # FILA 5: Botón Igual (=) ancho completo
-    if st.button("=", use_container_width=True):
-        entrada_val = st.session_state.calc_input.strip()
-        if entrada_val in PINS:
+    if st.button("Calcular / Acceder"):
+        if entrada.strip() in PINS:
             st.session_state.authenticated = True
-            st.session_state.user_role = PINS[entrada_val]
+            st.session_state.user_role = PINS[entrada.strip()]
+            st.success("Acceso concedido. Cargando gestor...")
             st.rerun()
         else:
             try:
                 allowed_chars = set("0123456789+-*/(). ")
-                if all(c in allowed_chars for c in entrada_val) and entrada_val != "":
-                    resultado = eval(entrada_val)
-                    st.session_state.calc_input = str(resultado)
-                    st.session_state.reset_next = True
-                    st.rerun()
+                if all(c in allowed_chars for c in entrada):
+                    resultado = eval(entrada)
+                    st.info(f"Resultado: {resultado}")
                 else:
-                    st.session_state.calc_input = "Error"
-                    st.session_state.reset_next = True
-                    st.rerun()
+                    st.error("Operación no válida o PIN incorrecto.")
             except Exception:
-                st.session_state.calc_input = "Error"
-                st.session_state.reset_next = True
-                st.rerun()
+                st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.2.6 - Calculadora Táctil Segura")
+    st.caption("v1.2.0 - Sistema estándar de cálculo")
