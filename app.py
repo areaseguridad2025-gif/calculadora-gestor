@@ -86,10 +86,6 @@ if st.session_state.authenticated:
                     rows_data = res_json.get("data", [])
                     if len(rows_data) > 1:
                         df_edit = pd.DataFrame(rows_data[1:], columns=rows_data[0])
-                        
-                        # Mostrar temporalmente las columnas detectadas para depurar
-                        st.write("Columnas detectadas en la hoja:", list(df_edit.columns))
-                        
                         df_edit.columns = [str(col).strip().upper() for col in df_edit.columns]
                         
                         if "PLACA" in df_edit.columns:
@@ -99,7 +95,6 @@ if st.session_state.authenticated:
                                 row_vals = fila_match.iloc[0]
                                 target_id = row_vals.get("ID", "")
                                 
-                                # Extraer valores de forma segura por posición o nombre
                                 def get_field(col_name, fallback_index):
                                     if col_name in row_vals and pd.notna(row_vals[col_name]):
                                         return str(row_vals[col_name])
@@ -155,6 +150,8 @@ if st.session_state.authenticated:
                                             st.error(f"Error: {res_up_json.get('message')}")
                             else:
                                 st.warning("No se encontró ningún registro con esa placa exacta.")
+                        else:
+                            st.error("No se encontró la columna PLACA en la hoja de cálculo.")
             except Exception as e:
                 st.warning(f"Error de conexión: {e}")
 
@@ -185,7 +182,7 @@ if st.session_state.authenticated:
             else:
                 st.warning("No se pudieron cargar los registros previos.")
         except Exception as e:
-                    st.warning("No se pudieron cargar los registros previos.")
+            st.warning("No se pudieron cargar los registros previos.")
 
 else:
     st.title("🧮 Calculadora Científica")
@@ -211,4 +208,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.1.5 - Sistema estándar de cálculo")
+    st.caption("v1.1.6 - Sistema estándar de cálculo")
