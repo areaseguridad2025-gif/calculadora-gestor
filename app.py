@@ -63,10 +63,28 @@ if st.session_state.authenticated:
                     
                     if resultado.get("status") == "success":
                         st.success("¡Registro guardado y sincronizado en Google Drive en tiempo real!")
+                        st.rerun()
                     else:
                         st.error(f"Error en el servidor de Google: {resultado.get('message')}")
                 except Exception as e:
                     st.error(f"Error de conexión: {e}")
+
+    st.subheader("Registros Recientes en la Nube")
+    try:
+        response = requests.get(WEBHOOK_URL)
+        resultado = response.json()
+        if resultado.get("status") == "success":
+            rows = resultado.get("data", [])
+            if len(rows) > 1:
+                # La primera fila son los encabezados
+                df_view = pd.DataFrame(rows[1:], columns=rows[0])
+                st.dataframe(df_view.tail(10))
+            else:
+                st.info("Aún no hay registros guardados en la hoja.")
+        else:
+            st.warning("No se pudieron cargar los registros previos.")
+    except Exception as e:
+        st.warning("No se pudieron cargar los registros previos.")
 
 else:
     st.title("🧮 Calculadora Científica")
@@ -92,4 +110,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.0.5 - Sistema estándar de cálculo")
+    st.caption("v1.0.6 - Sistema estándar de cálculo")
