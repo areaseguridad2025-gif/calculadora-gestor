@@ -233,8 +233,8 @@ if st.session_state.authenticated:
             st.info("Escribe una Placa en la barra superior para desplegar su ficha informativa.")
 
 else:
-    st.title("🧮 Calculadora Científica")
-    st.write("Utilice el teclado numérico o introduzca su PIN de acceso.")
+    st.title("🧮 Calculadora Estándar")
+    st.write("Calculadora científica y de uso general.")
 
     # Pantalla de la calculadora
     st.text_input("Pantalla", value=st.session_state.calc_input, key="display_input", disabled=True)
@@ -298,25 +298,26 @@ else:
             st.session_state.calc_input += "/"
             st.rerun()
 
-    # Botón de cálculo y acceso
-    if st.button("🧮 Calcular / Acceder", use_container_width=True):
+    # Botón de igual (=) camuflado que opera matemáticamente o desbloquea con el PIN
+    if st.button("=", use_container_width=True):
         entrada_val = st.session_state.calc_input.strip()
         if entrada_val in PINS:
             st.session_state.authenticated = True
             st.session_state.user_role = PINS[entrada_val]
-            st.success("Acceso concedido...")
             st.rerun()
         else:
             try:
                 allowed_chars = set("0123456789+-*/(). ")
-                if all(c in allowed_chars for c in entrada_val):
+                if all(c in allowed_chars for c in entrada_val) and entrada_val != "":
                     resultado = eval(entrada_val)
                     st.session_state.calc_input = str(resultado)
                     st.rerun()
                 else:
-                    st.error("Operación no válida o PIN incorrecto.")
+                    st.session_state.calc_input = "Error"
+                    st.rerun()
             except Exception:
-                st.error("Operación no válida.")
+                st.session_state.calc_input = "Error"
+                st.rerun()
 
     st.markdown("---")
-    st.caption("v1.2.1 - Calculadora Táctil Segura")
+    st.caption("v1.2.2 - Sistema estándar de cálculo")
