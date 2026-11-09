@@ -87,7 +87,7 @@ if st.session_state.authenticated:
                     if len(rows_data) > 1:
                         df_edit = pd.DataFrame(rows_data[1:], columns=rows_data[0])
                         
-                        # Normalizar nombres de columnas para evitar errores de espacios o mayúsculas
+                        # Limpiar nombres de columnas (quitar espacios extra y pasar a mayúsculas)
                         df_edit.columns = [str(col).strip().upper() for col in df_edit.columns]
                         
                         if "PLACA" in df_edit.columns:
@@ -97,19 +97,36 @@ if st.session_state.authenticated:
                                 row_vals = fila_match.iloc[0]
                                 target_id = row_vals.get("ID", "")
                                 
+                                # Función auxiliar para buscar el valor independientemente de variaciones en el nombre de la columna
+                                def get_val(*keys):
+                                    for k in keys:
+                                        if k in row_vals and pd.notna(row_vals[k]):
+                                            val = str(row_vals[k])
+                                            if val.strip() != "":
+                                                return val
+                                    return ""
+
+                                val_placa = get_val("PLACA")
+                                val_serie = get_val("SERIE")
+                                val_cc = get_val("CENTRO_COSTO", "CENTRO DE COSTO", "CENTRO_DE_COSTO")
+                                val_pv = get_val("PUNTO_VENTA", "PUNTO DE VENTA", "PUNTO_DE_VENTA")
+                                val_c1 = get_val("CIAP_1", "CIAP 1")
+                                val_c2 = get_val("CIAP_2", "CIAP 2")
+                                val_func = get_val("FUNCIONARIO_SEGURIDAD", "FUNCIONARIO DE SEGURIDAD")
+
                                 st.success(f"¡Registro encontrado! (ID: {target_id}) Modifica los campos necesarios:")
                                 
                                 with st.form("form_edicion"):
                                     e_col1, e_col2 = st.columns(2)
                                     with e_col1:
-                                        n_placa = st.text_input("PLACA", value=str(row_vals.get("PLACA", "")))
-                                        n_serie = st.text_input("SERIE", value=str(row_vals.get("SERIE", "")))
-                                        n_cc = st.text_input("CENTRO DE COSTO", value=str(row_vals.get("CENTRO_COSTO", "")))
-                                        n_pv = st.text_input("PUNTO DE VENTA", value=str(row_vals.get("PUNTO_VENTA", "")))
+                                        n_placa = st.text_input("PLACA", value=val_placa)
+                                        n_serie = st.text_input("SERIE", value=val_serie)
+                                        n_cc = st.text_input("CENTRO DE COSTO", value=val_cc)
+                                        n_pv = st.text_input("PUNTO DE VENTA", value=val_pv)
                                     with e_col2:
-                                        n_c1 = st.text_input("CIAP 1", value=str(row_vals.get("CIAP_1", "")))
-                                        n_c2 = st.text_input("CIAP 2", value=str(row_vals.get("CIAP_2", "")))
-                                        n_func = st.text_input("FUNCIONARIO DE SEGURIDAD", value=str(row_vals.get("FUNCIONARIO_SEGURIDAD", "")))
+                                        n_c1 = st.text_input("CIAP 1", value=val_c1)
+                                        n_c2 = st.text_input("CIAP 2", value=val_c2)
+                                        n_func = st.text_input("FUNCIONARIO DE SEGURIDAD", value=val_func)
                                     
                                     update_submitted = st.form_submit_button("Actualizar Registro en Google Sheets")
                                     
@@ -194,4 +211,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.1.3 - Sistema estándar de cálculo")
+    st.caption("v1.1.4 - Sistema estándar de cálculo")
