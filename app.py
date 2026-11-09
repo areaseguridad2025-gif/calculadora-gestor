@@ -20,7 +20,7 @@ PINS = {
 
 if st.session_state.authenticated:
     st.sidebar.success(f"Sesión activa: {st.session_state.user_role}")
-    if st.sidebar.button("Cerrar Sesión (Volver a Calculadora)"):
+    if st.sidebar.button("Cerrar Sesión"):
         st.session_state.authenticated = False
         st.session_state.user_role = ""
         st.rerun()
@@ -196,7 +196,6 @@ if st.session_state.authenticated:
 
                                 st.success(f"¡Registro encontrado! (ID: {target_id})")
                                 
-                                # Mostrar los datos en formato de formulario de solo lectura
                                 c_col1, c_col2 = st.columns(2)
                                 with c_col1:
                                     st.text_input("PLACA (Consulta)", value=c_placa, disabled=True, key="c_placa")
@@ -216,11 +215,11 @@ if st.session_state.authenticated:
 
 else:
     st.title("🧮 Calculadora Científica")
-    st.write("Ingrese una operación matemática o introduzca su PIN de acceso.")
+    st.write("Ingrese una operación matemática.")
 
-    entrada = st.text_input("Pantalla", value="", placeholder="Ej. 45 * 12 o PIN de usuario")
+    entrada = st.text_input("Pantalla", value="", placeholder="Ej. 45 * 12")
 
-    if st.button("Calcular / Acceder"):
+    if st.button("Calcular"):
         if entrada.strip() in PINS:
             st.session_state.authenticated = True
             st.session_state.user_role = PINS[entrada.strip()]
@@ -233,9 +232,9 @@ else:
                     resultado = eval(entrada)
                     st.info(f"Resultado: {resultado}")
                 else:
-                    st.error("Operación no válida o PIN incorrecto.")
+                    st.error("Operación no válida.")
             except Exception:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.2.0 - Sistema estándar de cálculo")
+    st.caption("v1.2.1 - Sistema estándar de cálculo")
