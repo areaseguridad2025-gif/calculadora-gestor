@@ -3,7 +3,27 @@ import pandas as pd
 from datetime import datetime
 import requests
 
-st.set_page_config(page_title="Calculadora Estándar", page_icon="🧮", layout="centered")
+st.set_page_config(page_title="Calculadora", page_icon="🔢", layout="centered")
+
+# --- INYECCIÓN DE MANIFIESTO PWA PARA APARIENCIA DE CALCULADORA ---
+pwa_manifest = """
+<link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
+  &quot;name&quot;: &quot;Calculadora&quot;,
+  &quot;short_name&quot;: &quot;Calculadora&quot;,
+  &quot;start_url&quot;: &quot;.&quot;,
+  &quot;display&quot;: &quot;standalone&quot;,
+  &quot;background_color&quot;: &quot;#ffffff&quot;,
+  &quot;theme_color&quot;: &quot;#ffffff&quot;,
+  &quot;icons&quot;: [
+    {
+      &quot;src&quot;: &quot;https://cdn-icons-png.flaticon.com/512/564/564444.png&quot;,
+      &quot;sizes&quot;: &quot;512x512&quot;,
+      &quot;type&quot;: &quot;image/png&quot;
+    }
+  ]
+}">
+"""
+st.markdown(pwa_manifest, unsafe_allow_html=True)
 
 WEBHOOK_URL = st.secrets["WEBHOOK_URL"]
 
@@ -124,7 +144,7 @@ if st.session_state.authenticated:
                                         n_c1 = st.text_input("CIAP 1", value=val_c1)
                                         n_c2 = st.text_input("CIAP 2", value=val_c2)
                                         n_func = st.text_input("FUNCIONARIO DE SEGURIDAD", value=val_func)
-                                    
+                                
                                     update_submitted = st.form_submit_button("Actualizar Registro en Google Sheets")
                                     
                                     if update_submitted:
@@ -196,7 +216,6 @@ if st.session_state.authenticated:
 
                                 st.success(f"¡Registro encontrado! (ID: {target_id})")
                                 
-                                # Mostrar los datos en formato de formulario de solo lectura
                                 c_col1, c_col2 = st.columns(2)
                                 with c_col1:
                                     st.text_input("PLACA (Consulta)", value=c_placa, disabled=True, key="c_placa")
@@ -239,4 +258,3 @@ else:
 
     st.markdown("---")
     st.caption("v1.2.0 - Sistema estándar de cálculo")
-    
