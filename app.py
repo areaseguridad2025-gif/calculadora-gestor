@@ -208,4 +208,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.1.6 - Sistema estándar de cálculo")
+    st.caption("v1.1.7 - Sistema estándar de cálculo")
