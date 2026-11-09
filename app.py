@@ -5,7 +5,32 @@ import requests
 
 st.set_page_config(page_title="Calculadora", page_icon="🔢", layout="centered")
 
-# --- INYECCIÓN DE MANIFIESTO PWA PARA APARIENCIA Y ICONO AUTOMÁTICO ---
+# --- ESTILO CSS PARA FORMAR LA GRILLA DE LA CALCULADORA PERFECTA ---
+st.markdown("""
+<style>
+    @media (max-width: 768px) {
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+        }
+        [data-testid="column"] {
+            width: 22% !important;
+            flex: 1 1 22% !important;
+            min-width: 60px !important;
+        }
+    }
+    div.stButton > button {
+        width: 100%;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 18px;
+        height: 50px;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# --- INYECCIÓN DE MANIFIESTO PWA OPTIMIZADO ---
 pwa_manifest = """
 <link rel="manifest" href="data:application/manifest+json;charset=utf-8,{
   &quot;name&quot;: &quot;Calculadora&quot;,
@@ -18,7 +43,8 @@ pwa_manifest = """
     {
       &quot;src&quot;: &quot;https://cdn-icons-png.flaticon.com/512/564/564444.png&quot;,
       &quot;sizes&quot;: &quot;512x512&quot;,
-      &quot;type&quot;: &quot;image/png&quot;
+      &quot;type&quot;: &quot;image/png&quot;,
+      &quot;purpose&quot;: &quot;any maskable&quot;
     }
   ]
 }">
@@ -249,7 +275,7 @@ else:
     # Pantalla de la calculadora
     st.text_input("Pantalla", value=st.session_state.calc_input, key="display_input", disabled=True)
 
-    # Grilla de botones numéricos y operaciones
+    # Grilla de botones numéricos y operaciones en 4 columnas estables
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
@@ -338,4 +364,4 @@ else:
                 st.rerun()
 
     st.markdown("---")
-    st.caption("v1.2.3 - Sistema estándar de cálculo")
+    st.caption("v1.2.5 - Sistema estándar de cálculo")
