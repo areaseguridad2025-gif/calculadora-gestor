@@ -27,7 +27,6 @@ if st.session_state.authenticated:
 
     st.title("📋 Panel de Gestión de Datos")
     
-    # Pestañas para separar Nuevo Registro y Edición/Consulta
     tab1, tab2, tab3 = st.tabs(["➕ Nuevo Registro", "✏️ Editar Registro", "🔍 Consultar y Buscar"])
 
     with tab1:
@@ -75,25 +74,27 @@ if st.session_state.authenticated:
                         st.error(f"Error de conexión: {e}")
 
     with tab2:
-        st.markdown("Modifica un registro existente buscando por su número de **ID**:")
+        st.markdown("Escribe la **Placa** del registro que deseas buscar y editar:")
         
-        # Cargar datos para buscar el ID
-        try:
-            resp_get = requests.get(WEBHOOK_URL)
-            res_json = resp_get.json()
-            if res_json.get("status") == "success":
-                rows_data = res_json.get("data", [])
-                if len(rows_data) > 1:
-                    df_edit = pd.DataFrame(rows_data[1:], columns=rows_data[0])
-                    ids_disponibles = df_edit["ID"].tolist() if "ID" in df_edit.columns else []
-                    
-                    selected_id = st.selectbox("Seleccione el ID a editar", options=ids_disponibles)
-                    
-                    if selected_id:
-                        # Filtrar la fila correspondiente
-                        fila_match = df_edit[df_edit["ID"] == selected_id]
+        busqueda_edicion = st.text_input("🔍 Ingresar Placa a buscar...", "").strip().upper()
+        
+        if busqueda_edicion:
+            try:
+                resp_get = requests.get(WEBHOOK_URL)
+                res_json = resp_get.json()
+                if res_json.get("status") == "success":
+                    rows_data = res_json.get("data", [])
+                    if len(rows_data) > 1:
+                        df_edit = pd.DataFrame(rows_data[1:], columns=rows_data[0])
+                        
+                        # Buscar coincidencia exacta o parcial en la columna PLACA
+                        fila_match = df_edit[df_edit["PLACA"].astype(str).str.upper() == busqueda_edicion]
+                        
                         if not fila_match.empty:
                             row_vals = fila_match.iloc[0]
+                            target_id = row_vals.get("ID")
+                            
+                            st.success(f"¡Registro encontrado! (ID: {target_id}) Modifica los campos necesarios:")
                             
                             with st.form("form_edicion"):
                                 e_col1, e_col2 = st.columns(2)
@@ -112,7 +113,7 @@ if st.session_state.authenticated:
                                 if update_submitted:
                                     payload_update = {
                                         "action": "update",
-                                        "id": selected_id,
+                                        "id": target_id,
                                         "placa": n_placa.upper(),
                                         "serie": n_serie.upper(),
                                         "centro_costo": n_cc.upper(),
@@ -130,10 +131,10 @@ if st.session_state.authenticated:
                                         st.success("¡Registro actualizado exitosamente en la nube!")
                                     else:
                                         st.error(f"Error: {res_up_json.get('message')}")
-                else:
-                    st.info("No hay registros disponibles para editar.")
-        except Exception as e:
-            st.warning("No se pudo conectar con la base de datos para edición.")
+                        else:
+                            st.warning("No se encontró ningún registro con esa placa exacta.")
+            except Exception as e:
+                st.warning("No se pudo conectar con la base de datos.")
 
     with tab3:
         st.subheader("🔍 Consultar y Buscar Registros")
@@ -187,4 +188,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.1.0 - Sistema estándar de cálculo")
+    st.caption("v1.1.2 - Sistema estándar de cálculo")
