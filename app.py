@@ -157,32 +157,36 @@ if st.session_state.authenticated:
 
     with tab3:
         st.subheader("🔍 Consultar y Buscar Registros")
-        try:
-            response = requests.get(WEBHOOK_URL)
-            resultado = response.json()
-            if resultado.get("status") == "success":
-                rows = resultado.get("data", [])
-                if len(rows) > 1:
-                    df_view = pd.DataFrame(rows[1:], columns=rows[0])
-                    df_view.columns = [str(col).strip().upper() for col in df_view.columns]
-                    
-                    busqueda = st.text_input("Buscar por Placa, Serie, Centro de Costo, Funcionario...", "").strip().upper()
-                    
-                    if busqueda:
+        
+        busqueda = st.text_input("Buscar por Placa, Serie, Centro de Costo, Funcionario...", "").strip().upper()
+        
+        # La tabla solo se procesa y se muestra si el usuario escribe algo en la barra
+        if busqueda:
+            try:
+                response = requests.get(WEBHOOK_URL)
+                resultado = response.json()
+                if resultado.get("status") == "success":
+                    rows = resultado.get("data", [])
+                    if len(rows) > 1:
+                        df_view = pd.DataFrame(rows[1:], columns=rows[0])
+                        df_view.columns = [str(col).strip().upper() for col in df_view.columns]
+                        
                         mask = df_view.apply(lambda row: row.astype(str).str.contains(busqueda, case=False, na=False).any(), axis=1)
                         df_view = df_view[mask]
-                    
-                    if not df_view.empty:
-                        st.dataframe(df_view, use_container_width=True, hide_index=True)
-                        st.caption(f"Mostrando {len(df_view)} registro(s) encontrado(s).")
+                        
+                        if not df_view.empty:
+                            st.dataframe(df_view, use_container_width=True, hide_index=True)
+                            st.caption(f"Mostrando {len(df_view)} registro(s) encontrado(s).")
+                        else:
+                            st.info("No se encontró ningún registro que coincida con la búsqueda.")
                     else:
-                        st.info("No se encontró ningún registro que coincida con la búsqueda.")
+                        st.info("Aún no hay registros guardados en la hoja.")
                 else:
-                    st.info("Aún no hay registros guardados en la hoja.")
-            else:
+                    st.warning("No se pudieron cargar los registros previos.")
+            except Exception as e:
                 st.warning("No se pudieron cargar los registros previos.")
-        except Exception as e:
-            st.warning("No se pudieron cargar los registros previos.")
+        else:
+            st.info("Escribe en la barra superior para buscar y mostrar los registros correspondientes.")
 
 else:
     st.title("🧮 Calculadora Científica")
@@ -208,4 +212,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.1.7 - Sistema estándar de cálculo")
+    st.caption("v1.1.8 - Sistema estándar de cálculo")
