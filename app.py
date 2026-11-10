@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime
 import requests
 
-st.set_page_config(page_title="Calculadora Estándar", page_icon="🧮", layout="centered")
+st.set_page_config(page_title="Calculadora Básica", page_icon="🧮", layout="centered")
 
 WEBHOOK_URL = st.secrets["WEBHOOK_URL"]
 
@@ -214,7 +214,7 @@ if st.session_state.authenticated:
             st.info("Escribe una Placa en la barra superior para desplegar su ficha informativa.")
 
 else:
-    st.title("🧮 Calculadora Científica")
+    st.title("🧮 Calculadora Básica")
     st.write("Ingrese una operación matemática.")
 
     entrada = st.text_input("Pantalla", value="", placeholder="Ej. 45 * 12")
@@ -237,4 +237,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.2.1 - Sistema estándar de cálculo")
+    st.caption("v1.2.2 - Sistema estándar de cálculo")
