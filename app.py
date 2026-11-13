@@ -32,14 +32,23 @@ if st.session_state.authenticated:
     with tab1:
         st.markdown("Ingrese la información requerida en la ficha:")
         with st.form("form_gestion"):
-            col1, col2 = st.columns(2)
-            with col1:
+            r1_col1, r1_col2 = st.columns(2)
+            with r1_col1:
                 placa = st.text_input("PLACA")
+            with r1_col2:
                 serie = st.text_input("SERIE")
-                centro_costo = st.text_input("CENTRO DE COSTO")
-            with col2:
+                
+            r2_col1, r2_col2 = st.columns(2)
+            with r2_col1:
                 punto_venta = st.text_input("PUNTO DE VENTA")
+            with r2_col2:
+                centro_costo = st.text_input("CENTRO DE COSTO")
+                
+            r3_col1, r3_col2 = st.columns(2)
+            with r3_col1:
                 funcionario_seguridad = st.text_input("FUNCIONARIO DE SEGURIDAD")
+            with r3_col2:
+                pass
             
             submitted = st.form_submit_button("Guardar y Sincronizar en Google Drive")
             
@@ -108,14 +117,23 @@ if st.session_state.authenticated:
                                 st.success(f"¡Registro encontrado! (ID: {target_id}) Modifica los campos necesarios:")
                                 
                                 with st.form("form_edicion"):
-                                    e_col1, e_col2 = st.columns(2)
-                                    with e_col1:
+                                    e1_c1, e1_c2 = st.columns(2)
+                                    with e1_c1:
                                         n_placa = st.text_input("PLACA", value=val_placa)
+                                    with e1_c2:
                                         n_serie = st.text_input("SERIE", value=val_serie)
-                                        n_cc = st.text_input("CENTRO DE COSTO", value=val_cc if val_cc else "")
-                                    with e_col2:
+                                        
+                                    e2_c1, e2_c2 = st.columns(2)
+                                    with e2_c1:
                                         n_pv = st.text_input("PUNTO DE VENTA", value=val_pv if val_pv else "")
+                                    with e2_c2:
+                                        n_cc = st.text_input("CENTRO DE COSTO", value=val_cc if val_cc else "")
+                                        
+                                    e3_c1, e3_c2 = st.columns(2)
+                                    with e3_c1:
                                         n_func = st.text_input("FUNCIONARIO DE SEGURIDAD", value=val_func)
+                                    with e3_c2:
+                                        pass
                                     
                                     update_submitted = st.form_submit_button("Actualizar Registro en Google Sheets")
                                     
@@ -184,14 +202,23 @@ if st.session_state.authenticated:
 
                                 st.success(f"¡Registro encontrado! (ID: {target_id})")
                                 
-                                c_col1, c_col2 = st.columns(2)
-                                with c_col1:
+                                c1_c1, c1_c2 = st.columns(2)
+                                with c1_c1:
                                     st.text_input("PLACA (Consulta)", value=c_placa, disabled=True, key="c_placa")
+                                with c1_c2:
                                     st.text_input("SERIE (Consulta)", value=c_serie, disabled=True, key="c_serie")
-                                    st.text_input("CENTRO DE COSTO (Consulta)", value=c_cc, disabled=True, key="c_cc")
-                                with c_col2:
+                                    
+                                c2_c1, c2_c2 = st.columns(2)
+                                with c2_c1:
                                     st.text_input("PUNTO DE VENTA (Consulta)", value=c_pv, disabled=True, key="c_pv")
+                                with c2_c2:
+                                    st.text_input("CENTRO DE COSTO (Consulta)", value=c_cc, disabled=True, key="c_cc")
+                                    
+                                c3_c1, c3_c2 = st.columns(2)
+                                with c3_c1:
                                     st.text_input("FUNCIONARIO DE SEGURIDAD (Consulta)", value=c_func, disabled=True, key="c_func")
+                                with c3_c2:
+                                    pass
                             else:
                                 st.warning("No se encontró ningún registro con esa placa exacta.")
             except Exception as e:
@@ -223,4 +250,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.3.0 - Sistema estándar de cálculo")
+    st.caption("v1.3.2 - Sistema estándar de cálculo")
