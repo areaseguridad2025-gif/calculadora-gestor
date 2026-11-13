@@ -37,10 +37,8 @@ if st.session_state.authenticated:
                 placa = st.text_input("PLACA")
                 serie = st.text_input("SERIE")
                 centro_costo = st.text_input("CENTRO DE COSTO")
-                punto_venta = st.text_input("PUNTO DE VENTA")
             with col2:
-                ciap_1 = st.text_input("CIAP 1")
-                ciap_2 = st.text_input("CIAP 2")
+                punto_venta = st.text_input("PUNTO DE VENTA")
                 funcionario_seguridad = st.text_input("FUNCIONARIO DE SEGURIDAD")
             
             submitted = st.form_submit_button("Guardar y Sincronizar en Google Drive")
@@ -55,8 +53,6 @@ if st.session_state.authenticated:
                             "serie": serie.upper(),
                             "centro_costo": centro_costo.upper(),
                             "punto_venta": punto_venta.upper(),
-                            "ciap_1": ciap_1,
-                            "ciap_2": ciap_2,
                             "funcionario_seguridad": funcionario_seguridad.upper(),
                             "rol": st.session_state.user_role
                         }
@@ -107,9 +103,7 @@ if st.session_state.authenticated:
                                 val_serie = get_field("SERIE", 3)
                                 val_cc = get_field("CENTRO_COSTO", 4) if "CENTRO_COSTO" in df_edit.columns else get_field("CENTRO DE COSTO", 4)
                                 val_pv = get_field("PUNTO_VENTA", 5) if "PUNTO_VENTA" in df_edit.columns else get_field("PUNTO DE VENTA", 5)
-                                val_c1 = get_field("CIAP_1", 6)
-                                val_c2 = get_field("CIAP_2", 7)
-                                val_func = get_field("FUNCIONARIO_SEGURIDAD", 8)
+                                val_func = get_field("FUNCIONARIO_SEGURIDAD", 6)
 
                                 st.success(f"¡Registro encontrado! (ID: {target_id}) Modifica los campos necesarios:")
                                 
@@ -119,10 +113,8 @@ if st.session_state.authenticated:
                                         n_placa = st.text_input("PLACA", value=val_placa)
                                         n_serie = st.text_input("SERIE", value=val_serie)
                                         n_cc = st.text_input("CENTRO DE COSTO", value=val_cc if val_cc else "")
-                                        n_pv = st.text_input("PUNTO DE VENTA", value=val_pv if val_pv else "")
                                     with e_col2:
-                                        n_c1 = st.text_input("CIAP 1", value=val_c1)
-                                        n_c2 = st.text_input("CIAP 2", value=val_c2)
+                                        n_pv = st.text_input("PUNTO DE VENTA", value=val_pv if val_pv else "")
                                         n_func = st.text_input("FUNCIONARIO DE SEGURIDAD", value=val_func)
                                     
                                     update_submitted = st.form_submit_button("Actualizar Registro en Google Sheets")
@@ -135,8 +127,6 @@ if st.session_state.authenticated:
                                             "serie": n_serie.upper(),
                                             "centro_costo": n_cc.upper(),
                                             "punto_venta": n_pv.upper(),
-                                            "ciap_1": n_c1,
-                                            "ciap_2": n_c2,
                                             "funcionario_seguridad": n_func.upper(),
                                             "rol": st.session_state.user_role
                                         }
@@ -190,9 +180,7 @@ if st.session_state.authenticated:
                                 c_serie = get_field_c("SERIE", 3)
                                 c_cc = get_field_c("CENTRO_COSTO", 4) if "CENTRO_COSTO" in df_view.columns else get_field_c("CENTRO DE COSTO", 4)
                                 c_pv = get_field_c("PUNTO_VENTA", 5) if "PUNTO_VENTA" in df_view.columns else get_field_c("PUNTO DE VENTA", 5)
-                                c_c1 = get_field_c("CIAP_1", 6)
-                                c_c2 = get_field_c("CIAP_2", 7)
-                                c_func = get_field_c("FUNCIONARIO_SEGURIDAD", 8)
+                                c_func = get_field_c("FUNCIONARIO_SEGURIDAD", 6)
 
                                 st.success(f"¡Registro encontrado! (ID: {target_id})")
                                 
@@ -201,10 +189,8 @@ if st.session_state.authenticated:
                                     st.text_input("PLACA (Consulta)", value=c_placa, disabled=True, key="c_placa")
                                     st.text_input("SERIE (Consulta)", value=c_serie, disabled=True, key="c_serie")
                                     st.text_input("CENTRO DE COSTO (Consulta)", value=c_cc, disabled=True, key="c_cc")
-                                    st.text_input("PUNTO DE VENTA (Consulta)", value=c_pv, disabled=True, key="c_pv")
                                 with c_col2:
-                                    st.text_input("CIAP 1 (Consulta)", value=c_c1, disabled=True, key="c_c1")
-                                    st.text_input("CIAP 2 (Consulta)", value=c_c2, disabled=True, key="c_c2")
+                                    st.text_input("PUNTO DE VENTA (Consulta)", value=c_pv, disabled=True, key="c_pv")
                                     st.text_input("FUNCIONARIO DE SEGURIDAD (Consulta)", value=c_func, disabled=True, key="c_func")
                             else:
                                 st.warning("No se encontró ningún registro con esa placa exacta.")
@@ -237,4 +223,4 @@ else:
                 st.error("Operación no válida.")
 
     st.markdown("---")
-    st.caption("v1.2.2 - Sistema estándar de cálculo")
+    st.caption("v1.3.0 - Sistema estándar de cálculo")
